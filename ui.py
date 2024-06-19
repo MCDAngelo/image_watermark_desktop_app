@@ -72,6 +72,10 @@ class WatermarkAppUI:
         self.original_filename = filedialog.askopenfilename()
         self.open_image_file()
 
+    def ask_for_filename_to_save(self):
+        self.new_filename = filedialog.asksaveasfilename()
+        self.save_watermarked_file()
+
     def open_image_file(self):
         try:
             self.original_img = Image.open(self.original_filename)
@@ -80,6 +84,9 @@ class WatermarkAppUI:
             return
         else:
             self.show_scaled_img()
+
+    def save_watermarked_file(self):
+        self.original_img.save(self.new_filename)
 
     def show_scaled_img(self):
         self.copy_img = self.original_img.copy()
@@ -164,6 +171,13 @@ class WatermarkAppUI:
             command=self.add_watermark_text,
         )
         self.submit_text_button.grid(row=6, column=6)
+
+        self.save_file_button = tk.Button(
+            self.window,
+            text="Save File",
+            command=self.ask_for_filename_to_save,
+        )
+        self.save_file_button.grid(row=7, column=6)
 
     def add_watermark_text(self):
         self.open_image_file()
