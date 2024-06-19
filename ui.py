@@ -1,13 +1,12 @@
 import tkinter as tk
-from tkinter import colorchooser, filedialog, ttk
+from tkinter import colorchooser, filedialog
 
+import ttkbootstrap as ttk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
+from ttkbootstrap.constants import *
 
 from font_names import font_names
 
-BG_COLOR_SCREEN = "#95D2B3"
-BG_COLOR = "#F1F8E8"
-TXT_COLOR = "#55AD9B"
 UI_FONT = ("Arial", 18, "bold")
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
@@ -15,14 +14,14 @@ HEADER_HEIGHT = 50
 SIDEBAR_WIDTH = 450
 IMG_CANVAS_HEIGHT = WINDOW_HEIGHT - (HEADER_HEIGHT * 2)
 IMG_CANVAS_WIDTH = WINDOW_WIDTH - SIDEBAR_WIDTH
+WIDGET_PADDING = (40, 0)
 
 
 class WatermarkAppUI:
     def __init__(self):
-        self.window = tk.Tk()
+        self.window = ttk.Window(themename="lumen")
         self.window.title("Protect Your Work!")
         self.window.config(
-            bg=BG_COLOR_SCREEN,
             padx=10,
             pady=10,
             width=WINDOW_WIDTH,
@@ -30,39 +29,29 @@ class WatermarkAppUI:
         )
         self.create_canvases()
 
-        self.exit_button = tk.Button(
+        self.exit_button = ttk.Button(
             self.window,
             text="Exit Program",
             command=self.exit_program,
-            highlightbackground=BG_COLOR_SCREEN,
+            bootstyle="warning-outline",
         )
-        self.exit_button.grid(row=0, column=0, pady=10)
+        self.exit_button.grid(row=0, column=7, pady=10, sticky="E", padx=20)
 
-        self.file_button = tk.Button(
+        self.file_button = ttk.Button(
             self.window,
             text="Select File",
             command=self.ask_for_filename,
-            highlightbackground=BG_COLOR_SCREEN,
+            bootstyle="primary",
         )
-        self.file_button.grid(row=0, column=3)
+        self.file_button.grid(row=0, column=2)
 
-        self.watermark_inst_text = self.sidebar_canvas.create_text(
-            SIDEBAR_WIDTH / 2,
-            60,
-            text="Upload Image To Config Watermark",
-            fill=BG_COLOR_SCREEN,
-            font=UI_FONT,
-            justify="center",
-        )
-
-        self.config_watermark_button = tk.Button(
+        self.config_watermark_button = ttk.Button(
             self.window,
             text="Configure Watermark",
             command=self.config_watermark,
-            highlightbackground=BG_COLOR_SCREEN,
-            bg=BG_COLOR,
+            bootstyle="primary",
         )
-        self.config_watermark_button.grid(row=0, column=5)
+        self.config_watermark_button.grid(row=0, column=6, sticky="W")
 
         self.window.mainloop()
 
@@ -116,19 +105,30 @@ class WatermarkAppUI:
         )
 
     def create_canvases(self):
-        self.img_canvas = tk.Canvas(
+        self.img_canvas = ttk.Canvas(
             width=IMG_CANVAS_WIDTH,
             height=IMG_CANVAS_HEIGHT,
-            bg=BG_COLOR,
         )
-        self.img_canvas.grid(row=1, column=0, columnspan=6, rowspan=7)
-        self.sidebar_canvas = tk.Canvas(
+        self.img_canvas.configure(highlightthickness=5)
+        self.img_canvas.grid(
+            row=1,
+            column=0,
+            columnspan=6,
+            rowspan=12,
+            padx=20,
+        )
+        self.sidebar_canvas = ttk.Canvas(
             width=SIDEBAR_WIDTH,
             height=IMG_CANVAS_HEIGHT,
-            bg=BG_COLOR,
         )
+        self.sidebar_canvas.configure(highlightthickness=5)
         self.sidebar_canvas.grid(
-            row=1, column=6, columnspan=2, rowspan=7, padx=20, pady=20
+            row=1,
+            column=6,
+            columnspan=2,
+            rowspan=12,
+            padx=(0, 20),
+            pady=20,
         )
 
     def pick_color(self):
@@ -137,69 +137,121 @@ class WatermarkAppUI:
             return
 
     def create_font_selection(self):
-        self.font_name_option = ttk.Combobox(
+        # Create combobox for font selection
+        self.font_name_label = ttk.Label(
             self.window,
-            width=27,
-            state="readonly",
+            text="Font",
+            bootstyle="primary",
         )
+        self.font_name_label.grid(
+            row=5,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
+        self.font_name_option = ttk.Combobox(self.window, bootstyle="primary")
+        self.font_name_option.configure(state="readonly")
         self.font_dict = {i.split(".")[0]: i for i in font_names}
         font_opts = list(self.font_dict.keys())
-        # Adding combobox drop down list
         self.font_name_option["values"] = font_opts
-        self.font_name_option.grid(row=3, column=6)
-
-        # Can't get the default to work?
+        # Set default to Arial
         self.font_name_option.current(5)
+        self.font_name_option.grid(
+            row=6,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
         # Create slider to select font size
-        self.font_size_slider = tk.Scale(
+        self.font_size_slider = ttk.Scale(
             self.window,
             from_=40,
             to=1000,
             orient=tk.HORIZONTAL,
+            bootstyle="info",
         )
         self.font_size_slider.set(90)
-        self.font_size_slider.grid(row=4, column=6)
+        self.font_size_slider.grid(
+            row=6,
+            column=7,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
         # Create slider to select transparency
-        self.alpha_slider = tk.Scale(
+        self.alpha_slider = ttk.Scale(
             self.window,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
+            bootstyle="info",
         )
         self.alpha_slider.set(50)
-        self.alpha_slider.grid(row=4, column=7)
+        self.alpha_slider.grid(
+            row=9,
+            column=7,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
         # Create color choosing dialog
-        self.color_button = tk.Button(
+        # self.selected_color = (255, 175, 125)
+        self.color_button = ttk.Button(
             self.window,
-            text="Choose a color for your watermark",
+            text="Select Colour",
             command=self.pick_color,
+            bootstyle="info-outline",
         )
-        self.color_button.grid(row=5, column=6)
+        self.color_button.grid(
+            row=9,
+            column=6,
+            columnspan=2,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
     def config_watermark(self):
-        self.sidebar_canvas.itemconfig(
-            self.watermark_inst_text, text="Config Watermark"
+        self.watermark_text_input = ttk.Entry(
+            self.window,
+            width=30,
+            bootstyle="info",
         )
-        self.watermark_text_input = tk.Entry(self.window)
-        self.watermark_text_input.grid(row=2, column=6)
+        self.watermark_text_input.insert(tk.END, "ENTER WATERMARK TEXT HERE")
+        self.watermark_text_input.grid(
+            row=3,
+            column=6,
+            columnspan=2,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
         self.create_font_selection()
 
-        self.submit_text_button = tk.Button(
+        self.submit_text_button = ttk.Button(
             self.window,
             text="Apply",
             command=self.add_watermark_text,
+            bootstyle="info-outline",
         )
-        self.submit_text_button.grid(row=6, column=6)
+        self.submit_text_button.grid(
+            row=11,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
-        self.save_file_button = tk.Button(
+        self.save_file_button = ttk.Button(
             self.window,
             text="Save File",
             command=self.ask_for_filename_to_save,
+            bootstyle="info-outline",
         )
-        self.save_file_button.grid(row=7, column=6)
+        self.save_file_button.grid(
+            row=11,
+            column=7,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
 
     def add_watermark_text(self):
         self.open_image_file()
@@ -209,7 +261,7 @@ class WatermarkAppUI:
         self.selected_font = self.font_dict.get(selected_font_name)
         self.selected_font_size = self.font_size_slider.get()
         fnt = ImageFont.truetype(self.selected_font, int(self.selected_font_size))
-        self.selected_alpha = self.alpha_slider.get()
+        self.selected_alpha = int(self.alpha_slider.get())
         self.watermark = Image.new("RGBA", self.original_img.size, (255, 255, 255, 0))
         d = ImageDraw.Draw(self.watermark)
         d.text(
