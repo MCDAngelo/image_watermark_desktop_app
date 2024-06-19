@@ -79,18 +79,22 @@ class WatermarkAppUI:
 
     def open_image_file(self):
         try:
-            self.original_img = Image.open(self.original_filename)
-        except IsADirectoryError or FileNotFoundError:
-            print("Not possible to open file")
+            self.original_img = Image.open(self.original_filename).convert("RGBA")
+        except IsADirectoryError or FileNotFoundError as e:
+            print(f"Not possible to open file\n{e}")
             return
         else:
-            self.show_scaled_img()
+            self.show_scaled_img(self.original_img)
 
     def save_watermarked_file(self):
-        self.original_img.save(self.new_filename)
+        try:
+            self.final_img.save(self.new_filename)
+        except NameError as e:
+            print(f"Modified image not found, saving original.\n{e}")
+            return
 
-    def show_scaled_img(self):
-        self.copy_img = self.original_img.copy()
+    def show_scaled_img(self, img):
+        self.copy_img = img.copy()
         self.display_img = ImageTk.PhotoImage(self.copy_img)
         self.orig_h = self.display_img.height()
         self.orig_w = self.display_img.width()
@@ -123,7 +127,9 @@ class WatermarkAppUI:
             height=IMG_CANVAS_HEIGHT,
             bg=BG_COLOR,
         )
-        self.sidebar_canvas.grid(row=1, column=6, rowspan=7, padx=20, pady=20)
+        self.sidebar_canvas.grid(
+            row=1, column=6, columnspan=2, rowspan=7, padx=20, pady=20
+        )
 
     def pick_color(self):
         self.selected_color = colorchooser.askcolor()[0]
@@ -154,6 +160,16 @@ class WatermarkAppUI:
         )
         self.font_size_slider.set(90)
         self.font_size_slider.grid(row=4, column=6)
+
+        # Create slider to select transparency
+        self.alpha_slider = tk.Scale(
+            self.window,
+            from_=0,
+            to=100,
+            orient=tk.HORIZONTAL,
+        )
+        self.alpha_slider.set(50)
+        self.alpha_slider.grid(row=4, column=7)
 
         # Create color choosing dialog
         self.color_button = tk.Button(
@@ -187,18 +203,20 @@ class WatermarkAppUI:
 
     def add_watermark_text(self):
         self.open_image_file()
-        self.show_scaled_img()
+        self.show_scaled_img(self.original_img)
         self.watermark_text = self.watermark_text_input.get()
         selected_font_name = self.font_name_option.get()
         self.selected_font = self.font_dict.get(selected_font_name)
         self.selected_font_size = self.font_size_slider.get()
-        print(f"The selected color is: {self.selected_color}")
         fnt = ImageFont.truetype(self.selected_font, int(self.selected_font_size))
-        self.watermark = ImageDraw.Draw(self.original_img)
-        self.watermark.text(
+        self.selected_alpha = self.alpha_slider.get()
+        self.watermark = Image.new("RGBA", self.original_img.size, (255, 255, 255, 0))
+        d = ImageDraw.Draw(self.watermark)
+        d.text(
             (self.new_h, self.new_w),
             text=self.watermark_text,
             font=fnt,
-            fill=self.selected_color,
+            fill=(*self.selected_color, self.selected_alpha),
         )
-        self.show_scaled_img()
+        self.final_img = Image.alpha_composite(self.original_img, self.watermark)
+        self.show_scaled_img(self.final_img)
