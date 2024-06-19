@@ -12,8 +12,9 @@ UI_FONT = ("Arial", 18, "bold")
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
 HEADER_HEIGHT = 50
-BODY_CANVAS_HEIGHT = WINDOW_HEIGHT - (HEADER_HEIGHT * 2)
-SIDEBAR_WIDTH = 350
+SIDEBAR_WIDTH = 450
+IMG_CANVAS_HEIGHT = WINDOW_HEIGHT - (HEADER_HEIGHT * 2)
+IMG_CANVAS_WIDTH = WINDOW_WIDTH - SIDEBAR_WIDTH
 
 
 class WatermarkAppUI:
@@ -91,30 +92,35 @@ class WatermarkAppUI:
     def show_scaled_img(self):
         self.copy_img = self.original_img.copy()
         self.display_img = ImageTk.PhotoImage(self.copy_img)
-        h = self.display_img.height()
-        w = self.display_img.width()
+        self.orig_h = self.display_img.height()
+        self.orig_w = self.display_img.width()
         print(self.display_img.height())
-        if h > WINDOW_HEIGHT or w > WINDOW_WIDTH:
-            h_ratio = h / WINDOW_HEIGHT
-            w_ratio = w / WINDOW_WIDTH
+        if self.orig_h > IMG_CANVAS_HEIGHT or self.orig_w > IMG_CANVAS_WIDTH:
+            h_ratio = self.orig_h / IMG_CANVAS_HEIGHT
+            w_ratio = self.orig_w / IMG_CANVAS_WIDTH
             scaling_ratio = max(h_ratio, w_ratio)
-            self.new_h = int(round(h / scaling_ratio, 0))
-            self.new_w = int(round(w / scaling_ratio, 0))
-            self.tmp_img = self.copy_img.resize((self.new_h, self.new_w))
+            self.new_h = int(round(self.orig_h / scaling_ratio, 0))
+            self.new_w = int(round(self.orig_w / scaling_ratio, 0))
+            self.tmp_img = self.copy_img.resize((self.new_w, self.new_h))
             self.display_img = ImageTk.PhotoImage(self.tmp_img)
-            print("large image, need to resize")
-        self.img_canvas.create_image(0, 0, image=self.display_img, anchor="nw")
+            print("Large image, resizing for display")
+        self.img_canvas.create_image(
+            IMG_CANVAS_WIDTH / 2,
+            IMG_CANVAS_HEIGHT / 2,
+            image=self.display_img,
+            anchor="center",
+        )
 
     def create_canvases(self):
         self.img_canvas = tk.Canvas(
-            width=WINDOW_WIDTH - SIDEBAR_WIDTH,
-            height=BODY_CANVAS_HEIGHT,
+            width=IMG_CANVAS_WIDTH,
+            height=IMG_CANVAS_HEIGHT,
             bg=BG_COLOR,
         )
         self.img_canvas.grid(row=1, column=0, columnspan=6, rowspan=7)
         self.sidebar_canvas = tk.Canvas(
             width=SIDEBAR_WIDTH,
-            height=BODY_CANVAS_HEIGHT,
+            height=IMG_CANVAS_HEIGHT,
             bg=BG_COLOR,
         )
         self.sidebar_canvas.grid(row=1, column=6, rowspan=7, padx=20, pady=20)
