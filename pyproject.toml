@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "image-watermark-desktop-app"
+version = "0.1.0"
+description = "Add watermarks to images using this python app"
+authors = ["Maria C. D'Angelo"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pillow = "^10.3.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+flake8 = "^7.1.0"
+isort = "^5.13.2"
+mypy = "^1.10.0"
+pylint = "^3.2.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
