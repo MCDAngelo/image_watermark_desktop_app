@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import colorchooser, filedialog
+from tkinter import filedialog
+from tkinter.colorchooser import askcolor
 
 import ttkbootstrap as ttk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
@@ -87,7 +88,6 @@ class WatermarkAppUI:
         self.display_img = ImageTk.PhotoImage(self.copy_img)
         self.orig_h = self.display_img.height()
         self.orig_w = self.display_img.width()
-        print(self.display_img.height())
         if self.orig_h > IMG_CANVAS_HEIGHT or self.orig_w > IMG_CANVAS_WIDTH:
             h_ratio = self.orig_h / IMG_CANVAS_HEIGHT
             w_ratio = self.orig_w / IMG_CANVAS_WIDTH
@@ -132,7 +132,7 @@ class WatermarkAppUI:
         )
 
     def pick_color(self):
-        self.selected_color = colorchooser.askcolor()[0]
+        self.selected_color = askcolor()[0]
         if self.selected_color:
             return
 
