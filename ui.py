@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 from tkinter.colorchooser import askcolor
 
 import ttkbootstrap as ttk
@@ -62,8 +63,8 @@ class WatermarkAppUI:
     def open_image_file(self, first_time=False):
         try:
             self.original_img = Image.open(self.original_filename).convert("RGBA")
-        except IsADirectoryError or FileNotFoundError as e:
-            print(f"Not possible to open file\n{e}")
+        except IsADirectoryError or FileNotFoundError:
+            messagebox.showinfo("Message", "Cannot open chosen file. Try again")
             return
         else:
             self.show_scaled_img(self.original_img)
@@ -73,8 +74,14 @@ class WatermarkAppUI:
     def save_watermarked_file(self):
         try:
             self.final_img.save(self.new_filename)
-        except NameError as e:
-            print(f"Modified image not found, saving original.\n{e}")
+        except AttributeError:
+            messagebox.showinfo(
+                "Message", "No modifications found. \n Add a watermark and try again."
+            )
+        except OSError or KeyError:
+            messagebox.showinfo("Message", "Please save as .PNG.")
+            self.ask_for_filename_to_save()
+        except ValueError or KeyError:
             return
 
     def show_scaled_img(self, img):
@@ -90,7 +97,6 @@ class WatermarkAppUI:
             self.new_w = int(round(self.orig_w / scaling_ratio, 0))
             self.tmp_img = self.copy_img.resize((self.new_w, self.new_h))
             self.display_img = ImageTk.PhotoImage(self.tmp_img)
-            print("Large image, resizing for display")
         self.img_canvas.create_image(
             IMG_CANVAS_WIDTH / 2,
             IMG_CANVAS_HEIGHT / 2,
@@ -132,18 +138,6 @@ class WatermarkAppUI:
 
     def create_font_selection(self):
         # Create combobox for font selection
-        self.font_name_label = ttk.Label(
-            self.window,
-            text="Font",
-            bootstyle="primary",
-            font=UI_FONT,
-        )
-        self.font_name_label.grid(
-            row=3,
-            column=6,
-            sticky="W",
-            padx=WIDGET_PADDING,
-        )
         self.font_name_option = ttk.Combobox(self.window, bootstyle="primary")
         self.font_name_option.configure(state="readonly")
         self.font_dict = {i.split(".")[0]: i for i in font_names}
@@ -159,18 +153,7 @@ class WatermarkAppUI:
         )
 
         # Create slider to select font size
-        self.font_size_label = ttk.Label(
-            self.window,
-            text="Font Size",
-            bootstyle="primary",
-            font=UI_FONT,
-        )
-        self.font_size_label.grid(
-            row=3,
-            column=7,
-            sticky="E",
-            padx=(0, 50),
-        )
+        # Ideally would update the to/from_ parameters based on the image size
         self.font_size_slider = ttk.Scale(
             self.window,
             from_=40,
@@ -178,7 +161,7 @@ class WatermarkAppUI:
             orient=tk.HORIZONTAL,
             bootstyle="info",
         )
-        self.font_size_slider.set(250)
+        self.font_size_slider.set(100)
         self.font_size_slider.grid(
             row=4,
             column=7,
@@ -186,19 +169,8 @@ class WatermarkAppUI:
             padx=(0, 50),
         )
 
+    def create_color_selection(self):
         # Create slider to select transparency
-        self.alpha_label = ttk.Label(
-            self.window,
-            text="Transparency",
-            bootstyle="primary",
-            font=UI_FONT,
-        )
-        self.alpha_label.grid(
-            row=5,
-            column=7,
-            sticky="E",
-            padx=(0, 50),
-        )
         self.alpha_slider = ttk.Scale(
             self.window,
             from_=0,
@@ -215,18 +187,6 @@ class WatermarkAppUI:
         )
 
         # Create color choosing dialog
-        self.color_label = ttk.Label(
-            self.window,
-            text="Colour",
-            bootstyle="primary",
-            font=UI_FONT,
-        )
-        self.color_label.grid(
-            row=5,
-            column=6,
-            sticky="W",
-            padx=WIDGET_PADDING,
-        )
         self.selected_color = (66, 255, 0)
         self.color_button = ttk.Button(
             self.window,
@@ -241,18 +201,8 @@ class WatermarkAppUI:
             sticky="W",
             padx=WIDGET_PADDING,
         )
-        self.location_label = ttk.Label(
-            self.window,
-            text="Location",
-            bootstyle="primary",
-            font=UI_FONT,
-        )
-        self.location_label.grid(
-            row=7,
-            column=6,
-            sticky="W",
-            padx=WIDGET_PADDING,
-        )
+
+    def create_location_selection(self):
         self.location_option = ttk.Combobox(self.window, bootstyle="primary")
         self.location_option.configure(state="readonly")
         self.location_dict = {
@@ -319,7 +269,11 @@ class WatermarkAppUI:
             sticky="W",
             padx=WIDGET_PADDING,
         )
+
         self.create_font_selection()
+        self.create_color_selection()
+        self.create_location_selection()
+        self.set_watermark_labels()
 
         self.submit_text_button = ttk.Button(
             self.window,
@@ -345,6 +299,79 @@ class WatermarkAppUI:
             column=7,
             sticky="W",
             padx=WIDGET_PADDING,
+        )
+
+    def set_watermark_labels(self):
+        self.font_name_label = ttk.Label(
+            self.window,
+            text="Font",
+            bootstyle="primary",
+            font=UI_FONT,
+        )
+        self.font_name_label.grid(
+            row=3,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
+        self.font_size_label = ttk.Label(
+            self.window,
+            text=f"Font Size: {int(self.font_size_slider.get())}",
+            bootstyle="primary",
+            font=UI_FONT,
+        )
+        self.font_size_label.grid(
+            row=3,
+            column=7,
+            sticky="E",
+            padx=(0, 50),
+        )
+        self.alpha_label = ttk.Label(
+            self.window,
+            text=f"Transparency: {self.alpha_slider.get():.0f}%",
+            bootstyle="primary",
+            font=UI_FONT,
+        )
+        self.alpha_label.grid(
+            row=5,
+            column=7,
+            sticky="E",
+            padx=(0, 50),
+        )
+        self.color_label = ttk.Label(
+            self.window,
+            text=f"Colour: {self.selected_color}",
+            bootstyle="primary",
+            font=UI_FONT,
+        )
+        self.color_label.grid(
+            row=5,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
+        self.location_label = ttk.Label(
+            self.window,
+            text="Location",
+            bootstyle="primary",
+            font=UI_FONT,
+        )
+        self.location_label.grid(
+            row=7,
+            column=6,
+            sticky="W",
+            padx=WIDGET_PADDING,
+        )
+
+    def update_watermark_labels(self):
+        self.font_size_label.config(
+            text=f"Font Size: {int(self.font_size_slider.get())}",
+        )
+        self.alpha_label.config(
+            text=f"Transparency: {self.alpha_slider.get():.0f}%",
+        )
+        self.color_label.config(
+            text=f"Colour: {self.selected_color}",
         )
 
     def config_watermark_text(self):
@@ -385,5 +412,6 @@ class WatermarkAppUI:
         # self.show_scaled_img(self.original_img)
 
     def apply_settings(self):
+        self.update_watermark_labels()
         self.config_watermark_text()
         self.add_watermark_text()
