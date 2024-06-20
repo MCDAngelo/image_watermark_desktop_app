@@ -41,33 +41,25 @@ class WatermarkAppUI:
         self.file_button = ttk.Button(
             self.window,
             text="Select File",
-            command=self.ask_for_filename,
+            command=lambda: self.ask_for_filename(True),
             bootstyle="primary",
         )
         self.file_button.grid(row=0, column=2)
-
-        self.config_watermark_button = ttk.Button(
-            self.window,
-            text="Configure Watermark",
-            command=self.config_watermark,
-            bootstyle="primary",
-        )
-        self.config_watermark_button.grid(row=0, column=6, sticky="W")
 
         self.window.mainloop()
 
     def exit_program(self):
         self.window.destroy()
 
-    def ask_for_filename(self):
+    def ask_for_filename(self, first_time=False):
         self.original_filename = filedialog.askopenfilename()
-        self.open_image_file()
+        self.open_image_file(first_time)
 
     def ask_for_filename_to_save(self):
         self.new_filename = filedialog.asksaveasfilename()
         self.save_watermarked_file()
 
-    def open_image_file(self):
+    def open_image_file(self, first_time=False):
         try:
             self.original_img = Image.open(self.original_filename).convert("RGBA")
         except IsADirectoryError or FileNotFoundError as e:
@@ -75,6 +67,8 @@ class WatermarkAppUI:
             return
         else:
             self.show_scaled_img(self.original_img)
+            if first_time:
+                self.config_watermark_menu()
 
     def save_watermarked_file(self):
         try:
@@ -211,7 +205,7 @@ class WatermarkAppUI:
             padx=WIDGET_PADDING,
         )
 
-    def config_watermark(self):
+    def config_watermark_menu(self):
         self.watermark_text_input = ttk.Entry(
             self.window,
             width=30,
@@ -230,7 +224,7 @@ class WatermarkAppUI:
         self.submit_text_button = ttk.Button(
             self.window,
             text="Apply",
-            command=self.add_watermark_text,
+            command=self.apply_settings,
             bootstyle="info-outline",
         )
         self.submit_text_button.grid(
@@ -253,22 +247,30 @@ class WatermarkAppUI:
             padx=WIDGET_PADDING,
         )
 
-    def add_watermark_text(self):
-        self.open_image_file()
-        self.show_scaled_img(self.original_img)
+    def config_watermark_text(self):
         self.watermark_text = self.watermark_text_input.get()
         selected_font_name = self.font_name_option.get()
         self.selected_font = self.font_dict.get(selected_font_name)
         self.selected_font_size = self.font_size_slider.get()
-        fnt = ImageFont.truetype(self.selected_font, int(self.selected_font_size))
+        self.selected_fnt = ImageFont.truetype(
+            self.selected_font, int(self.selected_font_size)
+        )
         self.selected_alpha = int(self.alpha_slider.get())
+    def add_watermark_text(self):
+        self.open_image_file()
+        self.show_scaled_img(self.original_img)
         self.watermark = Image.new("RGBA", self.original_img.size, (255, 255, 255, 0))
         d = ImageDraw.Draw(self.watermark)
         d.text(
             (self.new_h, self.new_w),
             text=self.watermark_text,
-            font=fnt,
+            font=self.selected_fnt,
             fill=(*self.selected_color, self.selected_alpha),
         )
         self.final_img = Image.alpha_composite(self.original_img, self.watermark)
         self.show_scaled_img(self.final_img)
+
+
+    def apply_settings(self):
+        self.config_watermark_text()
+        self.add_watermark_text()
