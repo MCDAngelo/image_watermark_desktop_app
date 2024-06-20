@@ -383,7 +383,6 @@ class WatermarkAppUI:
         )
         self.selected_alpha = int(self.alpha_slider.get())
         self.selected_location = self.location_dict.get(self.location_option.get())
-        print(self.selected_location)
 
     def add_watermark_text(self):
         self.open_image_file()
